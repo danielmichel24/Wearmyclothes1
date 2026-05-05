@@ -5,7 +5,8 @@ from PIL import Image
 modelo = tf.keras.applications.MobileNetV2(
     weights='imagenet',
     include_top=False,
-    pooling='avg'
+    pooling='avg',
+    input_shape=(224, 224, 3)
 )
 
 def cargar_imagen(ruta):

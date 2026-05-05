@@ -10,13 +10,21 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 from utils import cosine_similarity
 
-def escanearPrenda(imagen_nueva, base_datos):
-    embedding_nuevo = generar_embedding(imagen_nueva)
+
+def escanear_prenda(imagen, conjunto_de_imagenes, umbral):
+    embedding_nuevo = generar_embedding(imagen)
+
+    if embedding_nuevo is None:
+        return {
+            "detectado": False,
+            "prenda": None,
+            "similitud": 0
+        }
 
     mejor_similitud = -1
     mejor_prenda = None
 
-    for prenda in base_datos:
+    for prenda in conjunto_de_imagenes:
         sim = cosine_similarity(embedding_nuevo, prenda["embedding"])
 
         print(f"Comparando con {prenda['nombre']}: {sim:.4f}")
@@ -27,12 +35,19 @@ def escanearPrenda(imagen_nueva, base_datos):
 
     print("Mejor similitud:", mejor_similitud)
 
-    if mejor_similitud < 0.90:
-        return "no detectado"
+    if mejor_similitud < umbral:
+        return {
+            "detectado": False,
+            "prenda": None,
+            "similitud": float(mejor_similitud)
+        }
 
-    return mejor_prenda
+    return {
+        "detectado": True,
+        "prenda": mejor_prenda,
+        "similitud": float(mejor_similitud)
+    }
 
-from modelo import generar_embedding
 
 def registrar_prendas(imagenes):
     base_datos = []
@@ -51,9 +66,6 @@ def registrar_prendas(imagenes):
     return base_datos
 
 
-
-
-
 # 👇 TUS IMÁGENES
 imagenes = [
     {"nombre": "Camisa con botones", "ruta": "imagenes_prueba/camisa1_1.webp"},
@@ -63,7 +75,11 @@ imagenes = [
 # 🔥 SOLO UNA VEZ
 base_datos = registrar_prendas(imagenes)
 
-
-resultado = escanearPrenda("imagenes_prueba/test.webp", base_datos) 
+# 🔥 ahora con umbral dinámico
+resultado = escanear_prenda(
+    "imagenes_prueba/test.webp",
+    base_datos,
+    0.8
+)
 
 print("\nResultado final:", resultado)
