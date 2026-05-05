@@ -66,16 +66,16 @@ def registrar_prendas(imagenes):
     return base_datos
 
 
-# 👇 TUS IMÁGENES
+# TUS IMÁGENES
 imagenes = [
     {"nombre": "Camisa con botones", "ruta": "imagenes_prueba/camisa1_1.webp"},
     {"nombre": "Camisa lisa", "ruta": "imagenes_prueba/camisaazul.webp"}
 ]
 
-# 🔥 SOLO UNA VEZ
+#  SOLO UNA VEZ
 base_datos = registrar_prendas(imagenes)
 
-# 🔥 ahora con umbral dinámico
+#vahora con umbral dinámico
 resultado = escanear_prenda(
     "imagenes_prueba/test.webp",
     base_datos,
