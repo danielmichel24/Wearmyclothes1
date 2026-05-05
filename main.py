@@ -11,6 +11,8 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 from utils import cosine_similarity
 
 
+
+# FUNCIÓN PRINCIPAL
 def escanear_prenda(imagen, conjunto_de_imagenes, umbral):
     embedding_nuevo = generar_embedding(imagen)
 
@@ -49,6 +51,7 @@ def escanear_prenda(imagen, conjunto_de_imagenes, umbral):
     }
 
 
+# REGISTRAR PRENDAS
 def registrar_prendas(imagenes):
     base_datos = []
 
@@ -66,20 +69,53 @@ def registrar_prendas(imagenes):
     return base_datos
 
 
-# TUS IMÁGENES
-imagenes = [
-    {"nombre": "Camisa con botones", "ruta": "imagenes_prueba/camisa1_1.webp"},
-    {"nombre": "Camisa lisa", "ruta": "imagenes_prueba/camisaazul.webp"}
-]
+# CARGAR IMÁGENES AUTOMÁTICAMENTE
+def cargar_imagenes_desde_carpeta(ruta_carpeta):
+    imagenes = []
 
-#  SOLO UNA VEZ
+    for archivo in os.listdir(ruta_carpeta):
+        if archivo.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+
+            # ignorar test
+            if archivo.lower().startswith("test"):
+                continue
+
+            nombre_base = archivo.split('.')[0]
+            nombre_base = ''.join([c for c in nombre_base if not c.isdigit()]).replace('_', ' ').strip()
+
+            imagenes.append({
+                "nombre": nombre_base,
+                "ruta": os.path.join(ruta_carpeta, archivo)
+            })
+
+    return imagenes
+
+
+#BUSCAR IMAGEN DE TEST AUTOMÁTICAMENTE
+def obtener_ruta_test(ruta_carpeta):
+    for archivo in os.listdir(ruta_carpeta):
+        if archivo.lower().startswith("test") and archivo.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+            return os.path.join(ruta_carpeta, archivo)
+
+    return None
+
+
+
+# EJECUCIÓN
+
+imagenes = cargar_imagenes_desde_carpeta("imagenes_prueba")
+
 base_datos = registrar_prendas(imagenes)
 
-#vahora con umbral dinámico
-resultado = escanear_prenda(
-    "imagenes_prueba/test.webp",
-    base_datos,
-    0.8
-)
+ruta_test = obtener_ruta_test("imagenes_prueba")
 
-print("\nResultado final:", resultado)
+if ruta_test is None:
+    print("❌ No se encontró imagen de test")
+else:
+    resultado = escanear_prenda(
+        ruta_test,
+        base_datos,
+        0.8
+    )
+
+    print("\nResultado final:", resultado)
