@@ -160,34 +160,61 @@ def ejecutar_prueba():
 
     prendas_usuario = [
         {
-            #pantalon azul
-            "id": 3,
-            "url": "https://drive.google.com/uc?id=1eIckdPm4bDodOw4D1VNvQ31vCggl0Y5x"
-        },
-        {
-            #camisa vaquera de cuadros
-            "id": 6,
-            "url": "https://drive.google.com/uc?id=1qetaadJSRr48qaOhkQ8hkfMrRMP0DTMB"
-        },
-        {
             #gorra bulls 1
             "id": 1,
             "url": "https://drive.google.com/uc?id=1U1MIGL-voE901McRb-ydu9Xm3Sj7flMH"
         },
         {
             #gorra bulls 2
-            "id": 2,
+           "id": 2,
             "url": "https://drive.google.com/uc?id=1N0wZwx5Xc1_bj_XrNg0ShGIJ-FU-WDiZ"
+        },
+        {
+            #pantalon azul
+            "id": 3,
+            "url": "https://drive.google.com/uc?id=1eIckdPm4bDodOw4D1VNvQ31vCggl0Y5x"
         },
         {
             #Sueter verde 1
             "id": 4,
-            "url": "https://drive.google.com/uc?export=download&id=1Hb8dcYTrzQK1OQu8c94B4ZJqGTP4jt_G"
-        }
+            "url": "https://drive.google.com/uc?id=1Hb8dcYTrzQK1OQu8c94B4ZJqGTP4jt_G"
+        },
+        {
+            #camisa vaquera de cuadros
+            "id": 5,
+            "url": "https://drive.google.com/uc?id=1qetaadJSRr48qaOhkQ8hkfMrRMP0DTMB"
+        },    
+        {
+            #camisa lisa gris 3xl
+            "id": 6,
+            "url": "https://drive.google.com/uc?id=1WFli8HFXq-txJ-WYtr8sxUHGrNEy4Zat"
+        },
+        {
+            #camisa de cuadros mixta
+            "id": 7,
+            "url": "https://drive.google.com/uc?id=1KpCoanICuOuX7y4HOPI6QYr_31s1Mhhj"
+        },
+        {
+            #camisa negra de botones
+            "id": 7,
+            "url": "https://drive.google.com/uc?id=1JoncWFE0r-SWbKXs4H8oVYw2_MWChSQa"
+        },
+        {
+            #camisa negra lisa
+            "id": 8,
+            "url": "https://drive.google.com/uc?id=1NdX3LXPgqBE9PryVl4NjxBMcDI588Y7G"
+        },
+        {
+            #sudadera negra sin flash
+            "id": 9,
+            "url": "https://drive.google.com/uc?id=1le9IUh_qgu2K56w08Rcmi0y4BhZoIEvu"
+        },
+
+        
     ]
 
-    #gorra de One piece
-    imagen_a_escanear = "https://drive.google.com/uc?id=1M_Oca92ajfIj2kxeuiPQBDZzI3AEsupK"
+    #su
+    imagen_a_escanear ="https://drive.google.com/uc?id=1SCjgX_R80ks6oZIzqY1wbk98kDeEIcED"
 
     prendas_con_embeddings = registrar_prendas(
         prendas=prendas_usuario,
