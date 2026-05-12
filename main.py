@@ -1,11 +1,95 @@
 import os
 import json
-from modelo import generar_embedding
-from utils import cosine_similarity
+
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
-# FUNCIÓN PRINCIPAL
-def escanear_prenda(imagen_a_escanear, conjunto_de_prendas, umbral=0.70):
+from modelo import generar_embedding
+from utils import cosine_similarity
+
+
+def registrar_prendas(prendas, mostrar_logs=True):
+    """
+    Recibe una lista de prendas del usuario y genera su embedding.
+
+    Entrada esperada:
+    [
+        {
+            "id": 1,
+            "url": "https://drive.google.com/uc?id=..."
+        },
+        {
+            "id": 2,
+            "url": "https://drive.google.com/uc?id=..."
+        }
+    ]
+
+    Retorna:
+    [
+        {
+            "id": 1,
+            "url": "...",
+            "embedding": [...]
+        }
+    ]
+    """
+
+    prendas_con_embeddings = []
+
+    for prenda in prendas:
+        prenda_id = prenda.get("id")
+        url = prenda.get("url")
+
+        if prenda_id is None or url is None:
+            if mostrar_logs:
+                print("Prenda inválida. Debe tener 'id' y 'url'.")
+            continue
+
+        if mostrar_logs:
+            print(f"Registrando prenda ID {prenda_id}")
+
+        embedding = generar_embedding(url)
+
+        if embedding is None:
+            if mostrar_logs:
+                print(f"No se pudo registrar la prenda ID {prenda_id}")
+            continue
+
+        prendas_con_embeddings.append({
+            "id": prenda_id,
+            "url": url,
+            "embedding": embedding
+        })
+
+        if mostrar_logs:
+            print(f"Prenda ID {prenda_id} registrada correctamente")
+
+    return prendas_con_embeddings
+
+
+def escanear_prenda(imagen_a_escanear, conjunto_de_prendas, umbral=0.70, mostrar_logs=True):
+    """
+    Escanea una imagen y la compara contra las prendas registradas.
+
+    imagen_a_escanear puede ser:
+    - URL
+    - ruta local
+    - bytes de imagen
+
+    conjunto_de_prendas debe ser la salida de registrar_prendas().
+
+    Retorna:
+    {
+        "detectado": True,
+        "prenda_id": 1,
+        "similitud": 0.7368,
+        "top_matches": [
+            {"id": 1, "score": 0.7368},
+            {"id": 2, "score": 0.4775}
+        ],
+        "mensaje": "Prenda detectada correctamente."
+    }
+    """
+
     embedding_nuevo = generar_embedding(imagen_a_escanear)
 
     if embedding_nuevo is None:
@@ -29,7 +113,8 @@ def escanear_prenda(imagen_a_escanear, conjunto_de_prendas, umbral=0.70):
             "score": round(float(sim), 4)
         })
 
-        print(f"Comparando con prenda ID {prenda['id']}: {sim:.4f}")
+        if mostrar_logs:
+            print(f"Comparando con prenda ID {prenda['id']}: {sim:.4f}")
 
         if sim > mejor_similitud:
             mejor_similitud = sim
@@ -41,8 +126,9 @@ def escanear_prenda(imagen_a_escanear, conjunto_de_prendas, umbral=0.70):
         reverse=True
     )
 
-    print("Mejor similitud:", mejor_similitud)
-    print("Mejor prenda ID:", mejor_prenda_id)
+    if mostrar_logs:
+        print("Mejor similitud:", mejor_similitud)
+        print("Mejor prenda ID:", mejor_prenda_id)
 
     if mejor_similitud < umbral:
         return {
@@ -61,96 +147,63 @@ def escanear_prenda(imagen_a_escanear, conjunto_de_prendas, umbral=0.70):
         "mensaje": "Prenda detectada correctamente."
     }
 
-# REGISTRAR PRENDAS
-def registrar_prendas(prendas):
+
+def ejecutar_prueba():
     """
-    Recibe una lista de objetos con id y url.
-    Genera el embedding de cada imagen y lo guarda asociado al id.
+    Función solo para pruebas locales.
 
-    Ejemplo de entrada:
-    [
-        {
-            "id": 3,
-            "url": "https://drive.usercontent.google.com/download?id=1eIckdPm4bDodOw4D1VNvQ31vCggl0Y5x&authuser=0"
-        },
-        {
-            "id": 6,
-            "url": "https://drive.usercontent.google.com/download?id=1eIckdPm4bDodOw4D1VNvQ31vCggl0Y5x&authuser=0"
-        }
-        {
-            "id": 1
-            "url" :"https://drive.google.com/file/d/1U1MIGL-voE901McRb-ydu9Xm3Sj7flMH/view?usp=drive_link"       
-        }
-        {
-            "id": 2
-            "url" :"https://drive.google.com/file/d/1N0wZwx5Xc1_bj_XrNg0ShGIJ-FU-WDiZ/view?usp=sharing"       
-        }
-    ]
+    Esta función NO se ejecuta cuando Eduardo importe este archivo.
+    Solo se ejecuta cuando corres directamente:
+
+    python main.py
     """
-
-    base_datos = []
-
-    for prenda in prendas:
-        print(f"Registrando prenda ID {prenda['id']}")
-
-        embedding = generar_embedding(prenda["url"])
-
-        if embedding is None:
-            print(f"No se pudo registrar la prenda ID {prenda['id']}")
-            continue
-
-        base_datos.append({
-            "id": prenda["id"],
-            "url": prenda["url"],
-            "embedding": embedding
-        })
-
-        print(f"Prenda ID {prenda['id']} registrada correctamente")
-
-    return base_datos
-
-
-# EJECUCIÓN DE PRUEBA
-if __name__ == "__main__":
 
     prendas_usuario = [
         {
-            #pantalon Mezclilla azul
+            #pantalon azul
             "id": 3,
             "url": "https://drive.google.com/uc?id=1eIckdPm4bDodOw4D1VNvQ31vCggl0Y5x"
         },
         {
-            #Camisa de Cuadros vaquera
+            #camisa vaquera de cuadros
             "id": 6,
             "url": "https://drive.google.com/uc?id=1qetaadJSRr48qaOhkQ8hkfMrRMP0DTMB"
         },
         {
-            #Gorra Bulls 1
+            #gorra bulls 1
             "id": 1,
             "url": "https://drive.google.com/uc?id=1U1MIGL-voE901McRb-ydu9Xm3Sj7flMH"
         },
         {
-            #Gorra One piece 2
+            #gorra bulls 2
             "id": 2,
-            "url": "https://drive.google.com/uc?id=1xFLxg6PDGU6JpAzU6QgsnTW7bLegMYvc"
+            "url": "https://drive.google.com/uc?id=1N0wZwx5Xc1_bj_XrNg0ShGIJ-FU-WDiZ"
         },
         {
-            #sueter verde 1
+            #Sueter verde 1
             "id": 4,
-            "url": "https://drive.google.com/uc?export=download&id=1Hb8dcYTrzQK1OQu8c94B4ZJqGTP4jt_G"       
+            "url": "https://drive.google.com/uc?export=download&id=1Hb8dcYTrzQK1OQu8c94B4ZJqGTP4jt_G"
         }
     ]
 
-    with open("imagenes_prueba/test.jpeg", "rb") as archivo:
-        imagen_a_escanear = archivo.read()
+    #gorra de One piece
+    imagen_a_escanear = "https://drive.google.com/uc?id=1M_Oca92ajfIj2kxeuiPQBDZzI3AEsupK"
 
-    base_datos = registrar_prendas(prendas_usuario)
+    prendas_con_embeddings = registrar_prendas(
+        prendas=prendas_usuario,
+        mostrar_logs=True
+    )
 
     resultado = escanear_prenda(
         imagen_a_escanear=imagen_a_escanear,
-        conjunto_de_prendas=base_datos,
-        umbral=0.70
+        conjunto_de_prendas=prendas_con_embeddings,
+        umbral=0.70,
+        mostrar_logs=True
     )
 
     print("\nResultado final:")
     print(json.dumps(resultado, indent=4, ensure_ascii=False))
+
+
+if __name__ == "__main__":
+    ejecutar_prueba()
