@@ -1,121 +1,156 @@
 import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
-import tensorflow as tf
-from PIL import Image
-import numpy as np
+import json
 from modelo import generar_embedding
 from utils import cosine_similarity
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
-
-from utils import cosine_similarity
-
-
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 # FUNCIÓN PRINCIPAL
-def escanear_prenda(imagen, conjunto_de_imagenes, umbral):
-    embedding_nuevo = generar_embedding(imagen)
+def escanear_prenda(imagen_a_escanear, conjunto_de_prendas, umbral=0.70):
+    embedding_nuevo = generar_embedding(imagen_a_escanear)
 
     if embedding_nuevo is None:
         return {
             "detectado": False,
-            "prenda": None,
-            "similitud": 0
+            "prenda_id": None,
+            "similitud": 0,
+            "top_matches": [],
+            "mensaje": "No se pudo generar el embedding de la imagen enviada."
         }
 
     mejor_similitud = -1
-    mejor_prenda = None
+    mejor_prenda_id = None
+    resultados = []
 
-    for prenda in conjunto_de_imagenes:
+    for prenda in conjunto_de_prendas:
         sim = cosine_similarity(embedding_nuevo, prenda["embedding"])
 
-        print(f"Comparando con {prenda['nombre']}: {sim:.4f}")
+        resultados.append({
+            "id": prenda["id"],
+            "score": round(float(sim), 4)
+        })
+
+        print(f"Comparando con prenda ID {prenda['id']}: {sim:.4f}")
 
         if sim > mejor_similitud:
             mejor_similitud = sim
-            mejor_prenda = prenda["nombre"]
+            mejor_prenda_id = prenda["id"]
+
+    resultados = sorted(
+        resultados,
+        key=lambda x: x["score"],
+        reverse=True
+    )
 
     print("Mejor similitud:", mejor_similitud)
+    print("Mejor prenda ID:", mejor_prenda_id)
 
     if mejor_similitud < umbral:
         return {
             "detectado": False,
-            "prenda": None,
-            "similitud": float(mejor_similitud)
+            "prenda_id": None,
+            "similitud": round(float(mejor_similitud), 4),
+            "top_matches": resultados[:5],
+            "mensaje": "No se encontró una prenda suficientemente parecida."
         }
 
     return {
         "detectado": True,
-        "prenda": mejor_prenda,
-        "similitud": float(mejor_similitud)
+        "prenda_id": mejor_prenda_id,
+        "similitud": round(float(mejor_similitud), 4),
+        "top_matches": resultados[:5],
+        "mensaje": "Prenda detectada correctamente."
     }
 
-
 # REGISTRAR PRENDAS
-def registrar_prendas(imagenes):
+def registrar_prendas(prendas):
+    """
+    Recibe una lista de objetos con id y url.
+    Genera el embedding de cada imagen y lo guarda asociado al id.
+
+    Ejemplo de entrada:
+    [
+        {
+            "id": 3,
+            "url": "https://drive.usercontent.google.com/download?id=1eIckdPm4bDodOw4D1VNvQ31vCggl0Y5x&authuser=0"
+        },
+        {
+            "id": 6,
+            "url": "https://drive.usercontent.google.com/download?id=1eIckdPm4bDodOw4D1VNvQ31vCggl0Y5x&authuser=0"
+        }
+        {
+            "id": 1
+            "url" :"https://drive.google.com/file/d/1U1MIGL-voE901McRb-ydu9Xm3Sj7flMH/view?usp=drive_link"       
+        }
+        {
+            "id": 2
+            "url" :"https://drive.google.com/file/d/1N0wZwx5Xc1_bj_XrNg0ShGIJ-FU-WDiZ/view?usp=sharing"       
+        }
+    ]
+    """
+
     base_datos = []
 
-    for prenda in imagenes:
-        embedding = generar_embedding(prenda["ruta"])
+    for prenda in prendas:
+        print(f"Registrando prenda ID {prenda['id']}")
+
+        embedding = generar_embedding(prenda["url"])
 
         if embedding is None:
+            print(f"No se pudo registrar la prenda ID {prenda['id']}")
             continue
 
         base_datos.append({
-            "nombre": prenda["nombre"],
+            "id": prenda["id"],
+            "url": prenda["url"],
             "embedding": embedding
         })
+
+        print(f"Prenda ID {prenda['id']} registrada correctamente")
 
     return base_datos
 
 
-# CARGAR IMÁGENES AUTOMÁTICAMENTE
-def cargar_imagenes_desde_carpeta(ruta_carpeta):
-    imagenes = []
+# EJECUCIÓN DE PRUEBA
+if __name__ == "__main__":
 
-    for archivo in os.listdir(ruta_carpeta):
-        if archivo.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+    prendas_usuario = [
+        {
+            #pantalon Mezclilla azul
+            "id": 3,
+            "url": "https://drive.google.com/uc?id=1eIckdPm4bDodOw4D1VNvQ31vCggl0Y5x"
+        },
+        {
+            #Camisa de Cuadros vaquera
+            "id": 6,
+            "url": "https://drive.google.com/uc?id=1qetaadJSRr48qaOhkQ8hkfMrRMP0DTMB"
+        },
+        {
+            #Gorra Bulls 1
+            "id": 1,
+            "url": "https://drive.google.com/uc?id=1U1MIGL-voE901McRb-ydu9Xm3Sj7flMH"
+        },
+        {
+            #Gorra One piece 2
+            "id": 2,
+            "url": "https://drive.google.com/uc?id=1xFLxg6PDGU6JpAzU6QgsnTW7bLegMYvc"
+        },
+        {
+            #sueter verde 1
+            "id": 4,
+            "url": "https://drive.google.com/uc?export=download&id=1Hb8dcYTrzQK1OQu8c94B4ZJqGTP4jt_G"       
+        }
+    ]
 
-            # ignorar test
-            if archivo.lower().startswith("test"):
-                continue
+    with open("imagenes_prueba/test.jpeg", "rb") as archivo:
+        imagen_a_escanear = archivo.read()
 
-            nombre_base = archivo.split('.')[0]
-            nombre_base = ''.join([c for c in nombre_base if not c.isdigit()]).replace('_', ' ').strip()
+    base_datos = registrar_prendas(prendas_usuario)
 
-            imagenes.append({
-                "nombre": nombre_base,
-                "ruta": os.path.join(ruta_carpeta, archivo)
-            })
-
-    return imagenes
-
-
-#BUSCAR IMAGEN DE TEST AUTOMÁTICAMENTE
-def obtener_ruta_test(ruta_carpeta):
-    for archivo in os.listdir(ruta_carpeta):
-        if archivo.lower().startswith("test") and archivo.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
-            return os.path.join(ruta_carpeta, archivo)
-
-    return None
-
-
-
-# EJECUCIÓN
-
-imagenes = cargar_imagenes_desde_carpeta("imagenes_prueba")
-
-base_datos = registrar_prendas(imagenes)
-
-ruta_test = obtener_ruta_test("imagenes_prueba")
-
-if ruta_test is None:
-    print("❌ No se encontró imagen de test")
-else:
     resultado = escanear_prenda(
-        ruta_test,
-        base_datos,
-        0.8
+        imagen_a_escanear=imagen_a_escanear,
+        conjunto_de_prendas=base_datos,
+        umbral=0.70
     )
 
-    print("\nResultado final:", resultado)
+    print("\nResultado final:")
+    print(json.dumps(resultado, indent=4, ensure_ascii=False))
